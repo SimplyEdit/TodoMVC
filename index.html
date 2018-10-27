@@ -66,13 +66,21 @@
                     el.closest('ul').removeChild( el.closest('li') );
                 },
                 editTodo: function(el, value) {
-                    el.closest('li').classList.add('editing');
-                    var input = el.closest('li').querySelector('input[type="text"]');
+                    var item = el.closest('li');
+                    var input = item.querySelector('input[type="text"]');
+                    
+                    item.classList.add('editing');
                     input.focus();
+                    
                     input.addEventListener('blur', function() {
+                        input.removeEventListener('keyup', keyEscape);
                         todoApp.commands.call('showTodo', input);
                     }, { once: true });
+                    
                     var keyEscape = function(evt) {
+                        if (["Escape","Cancel"].indexOf(evt.key)!=-1) {
+                            input.value = item.querySelector('label[data-simply-field="item"]').innerHTML;
+                        }
                         if (["Escape","Cancel","Enter"].indexOf(evt.key)!=-1) {
                             todoApp.commands.call('showTodo', input);
                         }
@@ -85,15 +93,15 @@
                 }
             },
             view: (function() {
-            	var data = localStorage.getItem('simplyTodo');
-            	if (!data) {
-            		data = '[]';
-            	}
-            	var items = JSON.parse(data) || [];
-            	return {
-            		todo: items,
-            		count: items.length
-            	};
+                var data = localStorage.getItem('simplyTodo');
+                if (!data) {
+                    data = '[]';
+                }
+                var items = JSON.parse(data) || [];
+                return {
+                    todo: items,
+                    count: items.length
+                };
             })()
         });
     
