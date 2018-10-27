@@ -1,0 +1,3 @@
+[submodule "simplyview"]
+	path = simplyview
+	url = https://github.com/SimplyEdit/simplyview.git

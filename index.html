@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+    <link rel="stylesheet" href="/css/base.css">
+    <style>
+        input.toggle:checked ~ div.view label {
+            color: #d9d9d9;
+            text-decoration: line-through;
+        }
+        li.slip-reordering {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+            background-color: white;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/slipjs/2.0.0/slip.min.js"></script>
+</head>
+<body>
+    <section class="todoapp">
+        <div>
+            <header class="header">
+                <h1>todos</h1>
+                <form id="form" data-simply-command="addTodo">
+                    <input class="new-todo" type="text" name="newItem" placeholder="What needs to be done?">
+                </form>
+            </header>
+            <section class="main">
+                <ul class="todo-list" data-simply-list="todo">
+                    <template>
+                        <li>
+                            <input type="checkbox" class="toggle" data-simply-field="completed" value="1">
+                            <div class="view">
+                                <label data-simply-field="item">Item</label>
+                                <button class="edit" data-simply-command="editTodo"></button>
+                                <button class="destroy" data-simply-command="delTodo"></button>
+                            </div>
+                            <input class="edit" data-simply-field="item" type="text" data-simply-command="showTodo">
+                        </li>
+                    </template>
+                </ul>
+            </section>
+            <footer class="footer">
+                <span class="todo-count" data-simply-field="count" data-simply-content="template" data-simply-default-template="other">
+                    <template data-simply-template="0">Nothing left todo!</template>
+                    <template data-simply-template="1"><strong>1</strong> item left</template>
+                    <template data-simply-template="other"><strong data-simply-field="count">n</strong> items left</template>
+                </span>
+            </footer>
+        </div>
+    </section>
+    <p class="refer-back">This example is part of <a href="https://simplyedit.io/examples/" target="_blank">simplyedit.io/examples/</a>
+    <script src="/simplyview/dist/simply.everything.js"></script>
+    <script src="https://cdn.simplyedit.io/1/simply-edit.js"></script>
+    <script>
+        var todoApp = simply.app({
+            commands: {
+                addTodo: function(form, values) {
+                    if (values.newItem.trim()) {
+                        todoApp.view.todo.push({
+                            item : values.newItem.trim(),
+                            completed : 0
+                        });
+                    }
+                    form.newItem.value = '';
+                },
+                delTodo: function(el, value) {
+                    el.closest('ul').removeChild( el.closest('li') );
+                },
+                editTodo: function(el, value) {
+                    el.closest('li').classList.add('editing');
+                    var input = el.closest('li').querySelector('input[type="text"]');
+                    input.focus();
+                    input.addEventListener('blur', function() {
+                        todoApp.commands.call('showTodo', input);
+                    }, { once: true });
+                    var keyEscape = function(evt) {
+                        if (["Escape","Cancel","Enter"].indexOf(evt.key)!=-1) {
+                            todoApp.commands.call('showTodo', input);
+                        }
+                    };
+                    input.addEventListener('keyup', keyEscape);
+                },
+                showTodo: function(el, value) {
+                    el.closest('li').classList.remove('editing');
+                    el.blur();
+                }
+            },
+            view: (function() {
+            	var data = localStorage.getItem('simplyTodo');
+            	if (!data) {
+            		data = '[]';
+            	}
+            	var items = JSON.parse(data) || [];
+            	return {
+            		todo: items,
+            		count: items.length
+            	};
+            })()
+        });
+    
+        // 3: update the counter whenever the list changes
+        document.addEventListener('simply-data-changed', function(evt) {
+            if (evt.data.arguments[0]=='todo') {
+                todoApp.view.count = todoApp.view.todo.length;
+            }
+        });
+
+        document.addEventListener('simply-data-changed', function(evt) {
+            localStorage.setItem('simplyTodo', JSON.stringify(todoApp.view.todo));
+        });
+
+        // 6: drag and drop items to reorder them
+        var todoList = document.querySelector('ul.todo-list');
+
+        todoList.addEventListener('slip:reorder', function(e){
+            e.target.parentNode.insertBefore(e.target, e.detail.insertBefore);
+        });
+
+        // 7: swipe to remove an item
+        todoList.addEventListener('slip:swipe', function(e) {
+            e.target.parentNode.removeChild(e.target);
+        });
+
+        new Slip(todoList);
+
+    </script>
+</body>
+</html>
